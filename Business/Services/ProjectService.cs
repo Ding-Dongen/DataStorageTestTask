@@ -1,17 +1,19 @@
-﻿
-using Business.Dtos;
-using Business.Factories;
+﻿using Business.Dtos;
+using Business.Interfaces;
+using Data.Entities;
 using Data.Interfaces;
+
 namespace Business.Services
 {
-    public class ProjectService : IProjectService
+    public class ProjectService(IProjectRepository projectRepo,
+                          IStaffService staffService,
+                          IServiceService serviceService) : IProjectService
     {
-        private readonly IProjectRepository _projectRepo;
+        private readonly IProjectRepository _projectRepo = projectRepo;
+        private readonly IStaffService _staffService = staffService;
+        private readonly IServiceService _serviceService = serviceService;
+        
 
-        public ProjectService(IProjectRepository projectRepo)
-        {
-            _projectRepo = projectRepo;
-        }
 
         public async Task<IEnumerable<ProjectDto>> GetAllProjectsAsync()
         {
@@ -22,12 +24,27 @@ namespace Business.Services
                 Name = p.Name,
                 StartDate = p.StartDate,
                 EndDate = p.EndDate,
-                CustomerId = p.CustomerId,
+                CustomerName = p.Customer != null ? p.Customer.Name : "Ingen kund",
                 ServiceId = p.ServiceId,
                 StaffId = p.StaffId,
-                StatusId = p.StatusId,
+                StatusName = p.Status.Name != null ? p.Status.Name : "Ingen status",
                 TotalPrice = p.TotalPrice,
-                Description = p.Description
+                Description = p.Description,
+
+
+                 Service = p.Service != null ? new ServiceDto
+                 {
+                     Name = p.Service.Name,
+                     HourlyPrice = p.Service.HourlyPrice
+                 } : null,
+
+                 Staff = p.Staff != null
+            ? new StaffDto
+            {
+                Name = p.Staff.Name,
+                RoleName = p.Staff.Role.Name ?? "Unknown role" 
+            }
+            : null
             });
         }
 
@@ -42,7 +59,7 @@ namespace Business.Services
                 Name = project.Name,
                 StartDate = project.StartDate,
                 EndDate = project.EndDate,
-                CustomerId = project.CustomerId,
+                CustomerName = project.Customer?.Name ?? "N/A",
                 ServiceId = project.ServiceId,
                 StaffId = project.StaffId,
                 StatusId = project.StatusId,
@@ -53,32 +70,78 @@ namespace Business.Services
 
         public async Task<string> CreateProjectAsync(ProjectDto dto)
         {
-            // Step 1: Generate a unique project number
-            var newNumber = await GenerateProjectNumberAsync();
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
 
-            // Step 2: Convert DTO to Entity
-            var projectEntity = EntityFactory.CreateProject(dto, newNumber);
+            int serviceId = await _serviceService.EnsureServiceAsync(dto.Service);
 
-            // Step 3: Save to DB
-            await _projectRepo.AddAsync(projectEntity);
+            int staffId = await _staffService.EnsureStaffAsync(dto.Staff);
 
-            // Return the new project number to the caller
-            return newNumber;
+            // Insert project entity directly
+            var project = new Project
+            {
+                ProjectNumber = dto.ProjectNumber,
+                Name = dto.Name,
+                StartDate = dto.StartDate,
+                EndDate = dto.EndDate,
+                CustomerId = dto.CustomerId,
+                ServiceId = dto.ServiceId,
+                StaffId = dto.StaffId,
+                StatusId = dto.StatusId,
+                TotalPrice = dto.TotalPrice,
+                Description = dto.Description
+            };
+
+            await _projectRepo.AddAsync(project);
+            return dto.ProjectNumber;
         }
 
+        public async Task<string> CreateProjectWithDetailsAsync(ProjectCreateDetailedDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+
+            if (string.IsNullOrWhiteSpace(dto.ProjectNumber))
+                throw new ArgumentException("ProjectNumber is required.");
+
+            var serviceId = await _serviceService.EnsureServiceAsync(dto.Service);
+
+            var staffId = await _staffService.EnsureStaffAsync(dto.Staff);
+
+            // 🔹 Step 3: Construct the Project entity
+            var projectEntity = new Project
+            {
+                ProjectNumber = dto.ProjectNumber,
+                Name = dto.Name,
+                StartDate = dto.StartDate,
+                EndDate = dto.EndDate,
+                CustomerId = dto.CustomerId,
+                ServiceId = serviceId,
+                StaffId = staffId,
+                StatusId = dto.StatusId,
+                TotalPrice = dto.TotalPrice,
+                Description = dto.Description
+            };
+
+            await _projectRepo.AddAsync(projectEntity);
+
+            return dto.ProjectNumber;
+        }
+
+
+        // -----------------------------
+        // UPDATE
         public async Task UpdateProjectAsync(ProjectDto dto)
         {
-            // We look up the existing Project by its unique ProjectNumber
             var existing = await _projectRepo.GetAsync(dto.ProjectNumber);
-            if (existing == null) return; // No project found
+            if (existing == null) return;
 
-            // Update only the fields that can change
             existing.Name = dto.Name;
             existing.StartDate = dto.StartDate;
             existing.EndDate = dto.EndDate;
             existing.CustomerId = dto.CustomerId;
-            existing.ServiceId = dto.ServiceId;
-            existing.StaffId = dto.StaffId;
+            existing.ServiceId = await _serviceService.EnsureServiceAsync(dto.Service);
+            existing.StaffId = await _staffService.EnsureStaffAsync(dto.Staff);
             existing.StatusId = dto.StatusId;
             existing.TotalPrice = dto.TotalPrice;
             existing.Description = dto.Description;
@@ -86,19 +149,10 @@ namespace Business.Services
             await _projectRepo.UpdateAsync(existing);
         }
 
-        public async Task DeleteProjectAsync(string projectNumber)
+        public async Task<bool> DeleteProjectAsync(string projectNumber)
         {
             await _projectRepo.DeleteAsync(projectNumber);
-        }
-
-        private async Task<string> GenerateProjectNumberAsync()
-        {
-            // Very simple approach: "P-[count + 101]"
-            var all = await _projectRepo.GetAllAsync();
-            int count = all.Count();
-
-            // Example result: "P-101", "P-102", etc.
-            return $"P-{count + 101}";
+            return true;
         }
     }
 }

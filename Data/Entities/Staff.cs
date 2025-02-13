@@ -1,13 +1,18 @@
-﻿using System.Collections.Generic;
+﻿
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Data.Entities
+namespace Data.Entities;
+
+public class Staff
 {
-    public class Staff
-    {
-        public int StaffId { get; set; }
-        public string Name { get; set; }
-        // Could have a Role, or just store a role as string
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int StaffId { get; set; }
+    public string Name { get; set; }
+ 
+    public int RoleId { get; set; } 
 
-        public ICollection<Project> Projects { get; set; }
-    }
+    [ForeignKey("RoleId")]
+    public Role Role { get; set; }
 }

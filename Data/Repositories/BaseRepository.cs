@@ -1,17 +1,15 @@
-﻿using Data.Contexts;
+﻿using Microsoft.EntityFrameworkCore;
+using Data.Contexts;
 using Data.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Data.Repositories
 {
-    public class Repository<T> : IRepository<T> where T : class
+    public class BaseRepository<T> : IRepository<T> where T : class
     {
         protected readonly AppDbContext _context;
         private readonly DbSet<T> _dbSet;
 
-        public Repository(AppDbContext context)
+        public BaseRepository(AppDbContext context)
         {
             _context = context;
             _dbSet = _context.Set<T>();

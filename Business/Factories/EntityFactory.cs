@@ -2,25 +2,24 @@
 using Business.Dtos;
 using Data.Entities;
 
-namespace Business.Factories
+namespace Business.Factories;
+
+public static class EntityFactory
 {
-    public static class EntityFactory
+    public static Project CreateProject(ProjectDto dto, string projectNumber)
     {
-        public static Project CreateProject(ProjectDto dto, string generatedNumber)
+        return new Project
         {
-            return new Project
-            {
-                ProjectNumber = generatedNumber, // override any user input
-                Name = dto.Name,
-                StartDate = dto.StartDate,
-                EndDate = dto.EndDate,
-                CustomerId = dto.CustomerId,
-                ServiceId = dto.ServiceId,
-                StaffId = dto.StaffId,
-                StatusId = dto.StatusId,
-                TotalPrice = dto.TotalPrice,
-                Description = dto.Description
-            };
-        }
+            ProjectNumber = projectNumber,
+            Name = dto.Name,
+            StartDate = dto.StartDate,
+            EndDate = dto.EndDate,
+            CustomerId = dto.CustomerId,
+            ServiceId = dto.ServiceId,
+            StaffId = dto.StaffId,
+            StatusId = dto.StatusId,
+            TotalPrice = dto.TotalPrice,
+            Description = dto.Description
+        };
     }
 }

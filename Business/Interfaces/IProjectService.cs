@@ -1,14 +1,14 @@
 ﻿using Business.Dtos;
 
-
-namespace Business.Services
+namespace Business.Interfaces
 {
     public interface IProjectService
     {
         Task<IEnumerable<ProjectDto>> GetAllProjectsAsync();
         Task<ProjectDto> GetProjectByNumberAsync(string projectNumber);
         Task<string> CreateProjectAsync(ProjectDto dto);
+        Task<string> CreateProjectWithDetailsAsync(ProjectCreateDetailedDto dto);
         Task UpdateProjectAsync(ProjectDto dto);
-        Task DeleteProjectAsync(string projectNumber);
+        Task<bool> DeleteProjectAsync(string projectNumber);
     }
 }

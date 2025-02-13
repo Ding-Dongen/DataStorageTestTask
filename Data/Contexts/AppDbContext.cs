@@ -13,23 +13,30 @@ namespace Data.Contexts
         public DbSet<Service> Services { get; set; }
         public DbSet<Staff> Staff { get; set; }
         public DbSet<Status> Statuses { get; set; }
+        public DbSet<Role> Roles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Project>()
                 .Property(p => p.TotalPrice)
-                .HasPrecision(18, 2); // Configure decimal precision
+                .HasPrecision(18, 2);
 
             modelBuilder.Entity<Service>()
                 .Property(s => s.HourlyPrice)
-                .HasPrecision(18, 2); // Configure decimal precision
+                .HasPrecision(18, 2);
 
             modelBuilder.Entity<Project>()
-                .HasKey(p => p.ProjectNumber); // Primary key for Project
+                .HasKey(p => p.ProjectNumber); 
 
             modelBuilder.Entity<Project>()
                 .HasIndex(p => p.ProjectNumber)
-                .IsUnique(); // Ensure unique project numbers
+                .IsUnique(); 
+
+            modelBuilder.Entity<Role>().HasData(
+               new Role { Id = 1, Name = "Project Manager" },
+               new Role { Id = 2, Name = "Developer" },
+               new Role { Id = 3, Name = "Designer" }
+           );
 
             base.OnModelCreating(modelBuilder);
         }

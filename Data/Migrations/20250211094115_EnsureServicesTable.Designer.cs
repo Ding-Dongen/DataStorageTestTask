@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250127094930_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250211094115_EnsureServicesTable")]
+    partial class EnsureServicesTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -97,6 +97,40 @@ namespace Data.Migrations
                     b.ToTable("Projects");
                 });
 
+            modelBuilder.Entity("Data.Entities.Role", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Project Manager"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Developer"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Designer"
+                        });
+                });
+
             modelBuilder.Entity("Data.Entities.Service", b =>
                 {
                     b.Property<int>("ServiceId")
@@ -130,7 +164,12 @@ namespace Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
                     b.HasKey("StaffId");
+
+                    b.HasIndex("RoleId");
 
                     b.ToTable("Staff");
                 });
@@ -167,7 +206,7 @@ namespace Data.Migrations
                         .IsRequired();
 
                     b.HasOne("Data.Entities.Staff", "Staff")
-                        .WithMany("Projects")
+                        .WithMany()
                         .HasForeignKey("StaffId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -187,17 +226,28 @@ namespace Data.Migrations
                     b.Navigation("Status");
                 });
 
+            modelBuilder.Entity("Data.Entities.Staff", b =>
+                {
+                    b.HasOne("Data.Entities.Role", "Role")
+                        .WithMany("Staff")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+                });
+
             modelBuilder.Entity("Data.Entities.Customer", b =>
                 {
                     b.Navigation("Projects");
                 });
 
-            modelBuilder.Entity("Data.Entities.Service", b =>
+            modelBuilder.Entity("Data.Entities.Role", b =>
                 {
-                    b.Navigation("Projects");
+                    b.Navigation("Staff");
                 });
 
-            modelBuilder.Entity("Data.Entities.Staff", b =>
+            modelBuilder.Entity("Data.Entities.Service", b =>
                 {
                     b.Navigation("Projects");
                 });
