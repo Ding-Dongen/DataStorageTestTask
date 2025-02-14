@@ -53,36 +53,23 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("create-details")]
-        public async Task<IActionResult> CreateProjectWithDetails([FromBody] ProjectCreateDetailedDto dto)
+        public async Task<IActionResult> CreateProjectWithDetails([FromBody] ProjectCreateDetailedDto model)
         {
-            Console.WriteLine($"Received JSON: {JsonSerializer.Serialize(dto)}"); 
-
-            if (dto == null)
-                return BadRequest(new { message = "Invalid request. No data provided." });
-
-            if (dto.Service == null)
-            {
-                Console.WriteLine("ERROR: Service is NULL!");  
-                return BadRequest(new { message = "Service details are required." });
-            }
+            if (model == null)
+                return BadRequest("No data provided.");
 
             try
             {
-                var serviceId = await _serviceService.EnsureServiceAsync(dto.Service);
-                var staffId = await _staffService.EnsureStaffAsync(dto.Staff);
-
-                dto.ServiceId = serviceId;
-                dto.StaffId = staffId;
-
-                var newNumber = await _projectService.CreateProjectWithDetailsAsync(dto);
+                var newNumber = await _projectService.CreateProjectWithDetailsAsync(model);
                 return CreatedAtAction(nameof(Get), new { projectNumber = newNumber }, newNumber);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ERROR: {ex.Message}");
-                return StatusCode(500, new { message = "An error occurred while creating the project." });
+                // Optionally log the exception
+                return StatusCode(500, new { message = ex.Message });
             }
         }
+
 
 
 
@@ -95,6 +82,11 @@ namespace WebApi.Controllers
                 return NotFound(new { message = $"Project '{projectNumber}' not found." });
             }
 
+            if (dto.StaffId <= 0)
+            {
+                return BadRequest(new { message = "Invalid StaffId." });
+            }
+
             var staffExists = await _staffService.CheckStaffExistsAsync(dto.StaffId);
             if (!staffExists)
             {
@@ -105,6 +97,7 @@ namespace WebApi.Controllers
             await _projectService.UpdateProjectAsync(dto);
             return NoContent();
         }
+
 
         [HttpDelete("{projectNumber}")]
         public async Task<IActionResult> DeleteProject(string projectNumber)

@@ -21,12 +21,14 @@ namespace Business.Services.Implementations
             if (staffDto == null)
                 throw new ArgumentException("Staff details cannot be null.");
 
+            // first ensure the Role
             var roleId = await _roleService.EnsureRoleAsync(staffDto.RoleName);
 
+            // find staff by (Name + RoleId)
             var existingStaff = await _staffRepo.GetByNameAndRoleIdAsync(staffDto.Name, roleId);
-            if (existingStaff != null)
-                return existingStaff.StaffId;
+            if (existingStaff != null) return existingStaff.StaffId;
 
+            // create new staff
             var newStaff = new Staff
             {
                 Name = staffDto.Name,
@@ -35,6 +37,7 @@ namespace Business.Services.Implementations
             await _staffRepo.AddAsync(newStaff);
             return newStaff.StaffId;
         }
+
 
 
         public async Task<bool> CheckStaffExistsAsync(int staffId)

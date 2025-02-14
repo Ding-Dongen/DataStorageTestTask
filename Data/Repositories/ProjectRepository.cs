@@ -16,7 +16,21 @@ namespace Data.Repositories
                 .Include(p => p.Service)
                 .Include(p => p.Staff)
                 .ThenInclude(s => s.Role)
-                .ToListAsync();
+                .ToListAsync() ?? Enumerable.Empty<Project>();
+        }
+
+        public override async Task<Project> GetAsync(object id)
+        {
+            // If your ProjectNumber is a string PK, cast `id` to string
+            var projectNumber = (string)id;
+
+            return await _context.Projects
+                .Include(p => p.Customer)
+                .Include(p => p.Status)
+                .Include(p => p.Service)
+                .Include(p => p.Staff)
+                    .ThenInclude(s => s.Role)
+                .FirstOrDefaultAsync(p => p.ProjectNumber == projectNumber) ?? new Project();
         }
 
     }

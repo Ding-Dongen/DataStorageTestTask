@@ -22,28 +22,62 @@ namespace Data.Repositories
 
         public virtual async Task<T> GetAsync(object id)
         {
-            return await _dbSet.FindAsync(id);
+            if (id == null || (id is int intId && intId <= 0))
+            {
+                throw new ArgumentException("Invalid ID value.", nameof(id));
+            }
+
+            var entity = await _dbSet.FindAsync(id);
+            if (entity == null)
+            {
+                throw new InvalidOperationException($"Entity with id {id} not found.");
+            }
+            return entity;
         }
 
         public virtual async Task AddAsync(T entity)
         {
-            await _dbSet.AddAsync(entity);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _dbSet.AddAsync(entity);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                throw new InvalidOperationException("An error occurred while adding the entity.", ex);
+            }
         }
 
         public virtual async Task UpdateAsync(T entity)
         {
-            _dbSet.Update(entity);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _dbSet.Update(entity);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                throw new InvalidOperationException("An error occurred while updating the entity.", ex);
+            }
         }
 
         public virtual async Task DeleteAsync(object id)
         {
-            var entity = await _dbSet.FindAsync(id);
-            if (entity != null)
+            try
             {
-                _dbSet.Remove(entity);
-                await _context.SaveChangesAsync();
+                var entity = await _dbSet.FindAsync(id);
+                if (entity != null)
+                {
+                    _dbSet.Remove(entity);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                throw new InvalidOperationException("An error occurred while deleting the entity.", ex);
             }
         }
     }

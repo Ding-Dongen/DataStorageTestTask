@@ -2,6 +2,6 @@
 
 public class StaffDto
 {
-    public string Name { get; set; } = null!;
-    public string RoleName { get; set; } = "Unknown role";
+    public string Name { get; set; }
+    public string RoleName { get; set; }
 }
